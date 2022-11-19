@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ProcessLurker
 {
-    public class ProcessLurker : IDisposable
+    public class ProcessService : IDisposable
     {
         #region Fields
 
@@ -21,12 +21,12 @@ namespace ProcessLurker
 
         #region Constructors
 
-        public ProcessLurker(string processName)
+        public ProcessService(string processName)
             : this(new string[] { processName })
         {
         }
 
-        public ProcessLurker(IEnumerable<string> processNames)
+        public ProcessService(IEnumerable<string> processNames)
         {
             _processNames = processNames;
             _tokenSource = new CancellationTokenSource();
