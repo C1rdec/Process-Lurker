@@ -56,12 +56,29 @@ namespace ProcessLurker
 
         public static int CurrentProcessId => Environment.ProcessId;
 
-        public virtual async Task<int> WaitForProcess(bool waitForExit)
+        public virtual Task<int> WaitForProcess()
+            => WaitForProcess(false, 0);
+
+        public virtual Task<int> WaitForProcess(int timeout)
+            => WaitForProcess(false, timeout);
+
+        public virtual async Task<int> WaitForProcess(bool waitForExit, int timeout)
         {
             var process = GetProcess();
+            var token = _tokenSource.Token;
+
+            if (timeout > 0)
+            {
+                _ = Task.Delay(timeout).ContinueWith(t => _tokenSource.Cancel());
+            }
 
             while (process == null)
             {
+                if (token.IsCancellationRequested)
+                {
+                    return -1;
+                }
+
                 await Task.Delay(WaitingTime);
                 process = GetProcess();
             }
