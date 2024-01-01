@@ -57,12 +57,12 @@ namespace ProcessLurker
         public static int CurrentProcessId => Environment.ProcessId;
 
         public virtual Task<int> WaitForProcess()
-            => WaitForProcess(false, 0);
+            => WaitForProcess(false, false, 0);
 
         public virtual Task<int> WaitForProcess(int timeout)
-            => WaitForProcess(false, timeout);
+            => WaitForProcess(false, false, timeout);
 
-        public virtual async Task<int> WaitForProcess(bool waitForExit, int timeout)
+        public virtual async Task<int> WaitForProcess(bool waitForExit, bool waitForWindowHandle,int timeout)
         {
             var process = GetProcess();
             var token = _tokenSource.Token;
@@ -88,7 +88,8 @@ namespace ProcessLurker
                 WaitForExit();
             }
 
-            return WaitForWindowHandle();
+
+            return waitForWindowHandle ? await WaitForWindowHandle() : process.Id;
         }
 
         public void Dispose()
@@ -162,7 +163,7 @@ namespace ProcessLurker
             });
         }
 
-        private int WaitForWindowHandle()
+        private async Task<int> WaitForWindowHandle()
         {
             Process currentProcess;
 
@@ -171,7 +172,7 @@ namespace ProcessLurker
                 do
                 {
                     var process = this.GetProcess();
-                    Thread.Sleep(200);
+                    await Task.Delay(200);
                     currentProcess = process ?? throw new InvalidOperationException();
                 }
                 while (currentProcess.MainWindowHandle == IntPtr.Zero);
@@ -180,7 +181,7 @@ namespace ProcessLurker
             }
             catch
             {
-                _processId = this.WaitForWindowHandle();
+                _processId = await WaitForWindowHandle();
             }
 
             return _processId;
