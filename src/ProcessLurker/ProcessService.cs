@@ -62,7 +62,7 @@ namespace ProcessLurker
         public virtual Task<int> WaitForProcess(int timeout)
             => WaitForProcess(false, false, timeout);
 
-        public virtual async Task<int> WaitForProcess(bool waitForExit, bool waitForWindowHandle,int timeout)
+        public virtual async Task<int> WaitForProcess(bool waitForExit, bool waitForWindowHandle, int timeout)
         {
             var process = GetProcess();
             var token = _tokenSource.Token;
@@ -72,7 +72,8 @@ namespace ProcessLurker
                 _ = Task.Delay(timeout).ContinueWith(t => _tokenSource.Cancel());
             }
 
-            while (process == null)
+            var processId = 0;
+            while (processId == 0)
             {
                 if (token.IsCancellationRequested)
                 {
@@ -81,6 +82,7 @@ namespace ProcessLurker
 
                 await Task.Delay(WaitingTime);
                 process = GetProcess();
+                processId = process?.Id ?? 0;
             }
 
             if (waitForExit)
@@ -89,7 +91,7 @@ namespace ProcessLurker
             }
 
 
-            return waitForWindowHandle ? await WaitForWindowHandle() : process.Id;
+            return waitForWindowHandle ? await WaitForWindowHandle() : processId;
         }
 
         public void Dispose()
